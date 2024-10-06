@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
 
@@ -8,6 +8,43 @@ const LinkProcessor = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const getUserInfo = async () => {
+    try {
+      const ipResponse = await axios.get('https://api.ipify.org?format=json');
+      const ip = ipResponse.data.ip;
+
+      const geoResponse = await axios.get(`http://ip-api.com/json/${ip}`);
+      const geoData = geoResponse.data;
+
+      return {
+        ip: ip,
+        fullIpChain: ip,
+        location: {
+          city: geoData.city || 'Unknown',
+          region: geoData.regionName || 'Unknown',
+          country: geoData.country || 'Unknown',
+          latitude: geoData.lat || 'Unknown',
+          longitude: geoData.lon || 'Unknown',
+          timezone: geoData.timezone || 'Unknown',
+          isp: geoData.isp || 'Unknown'
+        },
+        device: {
+          browser: navigator.userAgent,
+          os: navigator.platform,
+          device: 'Unknown'
+        },
+        headers: {
+          referer: document.referrer || 'N/A',
+          language: navigator.language || 'N/A'
+        },
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      return null;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -15,7 +52,11 @@ const LinkProcessor = () => {
     setResult('');
 
     try {
-      const response = await axios.post('/process-link', { htmlUrl: url });
+      const userInfo = await getUserInfo();
+      const response = await axios.post('https://shrinkmev2.adaptable.app/process-link', {
+        htmlUrl: url,
+        userInfo: userInfo
+      });
       setResult(response.data.data);
     } catch (err) {
       setError(err.response?.data?.error || 'An error occurred while processing the link.');
