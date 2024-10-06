@@ -14,7 +14,7 @@ const LinkProcessor = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost/process-link', {
+      const response = await axios.post('https://shrinkmev2.adaptable.app/process-link', {
         htmlUrl: url
       });
 
